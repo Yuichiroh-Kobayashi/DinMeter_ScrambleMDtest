@@ -59,6 +59,7 @@ pio run
 pio device list
 pio run -t upload
 pio device monitor
+```
 
 ### Implementation (2026-04-26)
 

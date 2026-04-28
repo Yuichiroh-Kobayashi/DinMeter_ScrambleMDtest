@@ -27,7 +27,7 @@ public:
    * @brief MD20A wrapperを生成する。
    *
    * constructorではCytronMDオブジェクトを生成しない。
-   * CytronMDのconstructorはGPIOへ安全値を書き込むため、Armed中の出力関数で遅延生成する。
+   * 実出力有効時はbegin()で生成し、停止値だけを明示する。
    *
    * @param pwmPin PWM入力に接続するGPIO番号。
    * @param dirPin DIR入力に接続するGPIO番号。

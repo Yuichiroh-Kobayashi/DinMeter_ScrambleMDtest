@@ -109,7 +109,7 @@ public:
 | M2 output | 構造のみ。UI未実装、実機未検証 |
 | Real output | 未検証 |
 
-`CytronMD(PWM_PWM, pinA, pinB)` はconstructorでGPIOへ安全値を書き込むため、wrapper内でArmed中の初回出力直前に遅延生成する。
+`ENABLE_REAL_MOTOR_OUTPUT=1` のとき、wrapperは `begin()` で `CytronMD(PWM_PWM, pinA, pinB)` を生成し、停止値 `setSpeed(0)` だけを明示する。非ゼロ出力はArmed中の `update()` に限定する。
 
 ## Safety
 

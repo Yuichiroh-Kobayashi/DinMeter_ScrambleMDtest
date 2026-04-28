@@ -134,3 +134,18 @@ wrapper classは、次を保証する。
 - `update()` の `Armed` 状態でのみ外部ライブラリの出力関数を呼ぶ。
 - `Disabled` / `Fault` では停止指令または出力なしにする。
 - `ENABLE_REAL_MOTOR_OUTPUT=0` の既定状態では外部ライブラリの出力関数を呼ばない。
+
+## Safe output initialization
+
+`ENABLE_REAL_MOTOR_OUTPUT=1` のとき、`begin()` は停止値を明示するための安全初期化を行ってよい。
+
+許可される例:
+- PWM=0
+- DIRは既定方向
+- `setSpeed(0)`
+- ESC停止パルス
+
+禁止:
+- 非ゼロ速度指令
+- target値に基づく出力
+- Armed前の回転を起こす出力

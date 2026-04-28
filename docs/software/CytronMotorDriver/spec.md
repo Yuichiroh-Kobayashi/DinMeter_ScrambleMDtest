@@ -89,8 +89,8 @@ motor2.setSpeed(0);
 - Arduino-ESP32の `analogWrite()` は0〜255範囲のPWM出力である。
 - 必要に応じて `analogWriteFrequency(pin, frequencyHz)` で周波数を指定する。
 - Cytronライブラリが内部で `analogWrite()` を使う前提のため、ESP32-S3実機で波形確認する。
-- `CytronMD` のconstructorは `pinMode()` と `digitalWrite(LOW)` を行う。`ENABLE_REAL_MOTOR_OUTPUT=0` の既定状態ではconstructorも呼ばないよう、project wrapper側で遅延生成する。
-- MAKER-DRIVE wrapperも同じ理由で、Armed中の初回出力直前まで `CytronMD(PWM_PWM, ...)` を生成しない。
+- `CytronMD` のconstructorは `pinMode()` と `digitalWrite(LOW)` を行う。`ENABLE_REAL_MOTOR_OUTPUT=0` の既定状態ではconstructorも呼ばない。
+- `ENABLE_REAL_MOTOR_OUTPUT=1` のときは、project wrapperの `begin()` で `CytronMD` を生成し、停止値 `setSpeed(0)` だけを明示する。
 
 ## Unverified
 

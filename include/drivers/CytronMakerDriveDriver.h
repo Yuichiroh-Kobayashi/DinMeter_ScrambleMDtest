@@ -27,6 +27,7 @@ public:
    * @brief MAKER-DRIVE wrapperを生成する。
    *
    * constructorではCytronMDオブジェクトを生成しない。
+   * 実出力有効時はbegin()で生成し、停止値だけを明示する。
    *
    * @param m1aPin M1A入力に接続するGPIO番号。
    * @param m1bPin M1B入力に接続するGPIO番号。

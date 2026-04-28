@@ -30,7 +30,10 @@ bool CytronMakerDriveDriver::begin() {
   }
 
 #if ENABLE_REAL_MOTOR_OUTPUT
-  applyZeroOutput();
+  motor1()->setSpeed(0);
+  if (dualMotorMode_) {
+    motor2()->setSpeed(0);
+  }
 #else
   Serial.println("MAKER-DRIVE: CytronMotorDriver output disabled by ENABLE_REAL_MOTOR_OUTPUT=0.");
 #endif
@@ -150,7 +153,7 @@ void CytronMakerDriveDriver::writeSpeedOutput(int motor1SpeedCommand,
 #if ENABLE_REAL_MOTOR_OUTPUT
 CytronMD *CytronMakerDriveDriver::motor1() {
   if (motor1_ == nullptr) {
-    // CytronMDのconstructorはGPIOへ安全値を書き込むため、Armed中の初回出力直前に限定する。
+    // 実出力有効時だけ生成し、begin()では停止値だけを明示する。
     motor1_ = new CytronMD(PWM_PWM, m1aPin_, m1bPin_);
   }
   return motor1_;

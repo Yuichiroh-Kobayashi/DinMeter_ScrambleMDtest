@@ -24,8 +24,8 @@
 | MD20A_DIR | DIR | PORT.B White | G1 | Provisional | CytronMotorDriver `PWM_DIR` 実出力前にロジアナ確認 |
 | MAKER_DRIVE_M1A | PWM | PORT.B Yellow | G2 | Provisional | CytronMotorDriver `PWM_PWM` |
 | MAKER_DRIVE_M1B | PWM | PORT.B White | G1 | Provisional | CytronMotorDriver `PWM_PWM` |
-| MAKER_DRIVE_M2A | PWM | PORT.A Yellow | G15 | Provisional | 2ch使用時 |
-| MAKER_DRIVE_M2B | PWM | PORT.A White | G13 | Provisional | 2ch使用時 |
+| MAKER_DRIVE_M2A | PWM | PORT.A Yellow | G13 | Provisional | 2ch使用時 |
+| MAKER_DRIVE_M2B | PWM | PORT.A White | G15 | Provisional | 2ch使用時 |
 | C620_CAN_TX | CAN TX | PORT.A Yellow | G13 | Candidate | 外付けCAN transceiver必須 |
 | C620_CAN_RX | CAN RX | PORT.A White | G15 | Candidate | 外付けCAN transceiver必須 |
 | EDULITE_CAN_TX | CAN TX | PORT.A Yellow | G13 | Candidate | C620と同じCAN adapter想定 |

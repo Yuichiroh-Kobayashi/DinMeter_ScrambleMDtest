@@ -26,7 +26,7 @@ bool CytronMd20aDriver::begin() {
   }
 
 #if ENABLE_REAL_MOTOR_OUTPUT
-  applyZeroOutput();
+  motor()->setSpeed(0);
 #else
   Serial.println("MD20A: CytronMotorDriver output disabled by ENABLE_REAL_MOTOR_OUTPUT=0.");
 #endif
@@ -119,7 +119,7 @@ void CytronMd20aDriver::writeSpeedOutput(int speedCommand) {
 #if ENABLE_REAL_MOTOR_OUTPUT
 CytronMD *CytronMd20aDriver::motor() {
   if (motor_ == nullptr) {
-    // CytronMDのconstructorはGPIOを安全値へ初期化するため、Armed中の初回出力直前に限定する。
+    // 実出力有効時だけ生成し、begin()では停止値だけを明示する。
     motor_ = new CytronMD(PWM_DIR, pwmPin_, dirPin_);
   }
   return motor_;

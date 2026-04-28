@@ -84,7 +84,7 @@ public:
 ## Implementation rule
 
 - `CytronMD(PWM_DIR, pwmPin, dirPin)` をwrapper内部で使う。
-- `CytronMD` はconstructorでGPIOへ安全値を書き込むため、`ENABLE_REAL_MOTOR_OUTPUT=1` かつArmed中の初回出力直前に遅延生成する。
+- `ENABLE_REAL_MOTOR_OUTPUT=1` のときは、`begin()` で `CytronMD` を生成し、停止値 `setSpeed(0)` だけを明示する。
 - `setTargetPercent()` ではtargetを保存するだけにする。
 - `update(DriverStatus::Armed)` のときだけ `motor.setSpeed(speedCommand)` を呼ぶ。
 - `Disabled` / `Fault` では `motor.setSpeed(0)` 相当とする。

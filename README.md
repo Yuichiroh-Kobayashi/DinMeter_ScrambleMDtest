@@ -5,7 +5,8 @@ M5Stack DinMeter v1.1 を使って、各種モータ・モータドライバを�
 このリポジトリは、Scrambleジュニアロボットチーム向けに、DDモータやモータドライバを「1台ずつ接続して、正逆転と速度指令を確認する」簡易コントローラを開発するためのものです。
 
 > 現在は初期Bring-up段階です。  
-> 実モータ、ESC、CAN、RS485、PWM/DIRへの出力はまだ実装していません。
+> MD20AとMAKER-DRIVE向けにCytron公式ライブラリwrapperを追加しています。  
+> ただし既定では `ENABLE_REAL_MOTOR_OUTPUT=0` のため、実モータ出力は行いません。
 
 ---
 
@@ -17,7 +18,8 @@ M5Stack DinMeter v1.1 を使って、各種モータ・モータドライバを�
 
 | 対象 | 制御方式 | 初期方針 |
 |---|---|---|
-| Cytron MD20A | PWM + DIR | DCブラシ付きモータ用 |
+| Cytron MD20A | PWM + DIR | CytronMotorDriver `PWM_DIR` wrapper |
+| Cytron MAKER-DRIVE | PWM + PWM | CytronMotorDriver `PWM_PWM` wrapper / single motor mode中心 |
 | DJI RoboMaster M3508 + C620 | CAN | C620電流指令 + 本機側速度制御 |
 | RobStride EDULITE 05 | CAN | Private protocol / Velocity mode |
 | DDT-M0602C234 | RS485 | 速度環モード |
@@ -36,16 +38,21 @@ M5Stack DinMeter v1.1 を使って、各種モータ・モータドライバを�
 - ロータリエンコーダによる `target` 値の変更
 - 長押しによる `Disabled` / `Armed` の画面上状態遷移
 - 起動ログのSerial出力
+- 共通 `MotorDriver` interface
+- Cytron MD20A wrapper `CytronMd20aDriver`
+- Cytron MAKER-DRIVE wrapper `CytronMakerDriveDriver`
+- CytronMotorDriver公式ライブラリ依存
+- 実出力無効時のSerial preview
 
 未実装です。
 
 - CAN送信
 - RS485送信
-- PWM出力
-- PWM + DIR出力
-- 実モータ制御
-- Fault自動遷移
+- C620 / EDULITE / DDT / AIR40A の実装
 - モータプロファイル選択UI
+- MAKER-DRIVE 2ch操作UI
+- Fault自動遷移
+- 実機で検証済みの実モータ制御
 
 ---
 
@@ -61,7 +68,9 @@ M5Stack DinMeter v1.1 を使って、各種モータ・モータドライバを�
 - 長押しでのみ `Armed` へ遷移可能
 - `Disabled` ではモータ出力を出さない
 - `Fault` ではモータ出力を出さない
-- Bring-up段階では、実モータ出力を追加しない
+- 既定では `ENABLE_REAL_MOTOR_OUTPUT=0` とし、実モータ出力を行わない
+- `ENABLE_REAL_MOTOR_OUTPUT=1` の場合でも、`begin()` は停止値 `setSpeed(0)` だけを明示する
+- 非ゼロ出力は `Armed` 状態の `update()` に限定する
 
 禁止事項:
 
@@ -100,6 +109,14 @@ board = m5stack-stamps3
 framework = arduino
 monitor_speed = 115200
 upload_speed = 921600
+lib_deps =
+  m5stack/M5DinMeter
+  m5stack/M5Unified
+  m5stack/M5GFX
+  https://github.com/CytronTechnologies/CytronMotorDriver.git
+build_flags =
+  -DARDUINO_USB_CDC_ON_BOOT=1
+  -DARDUINO_USB_MODE=1
 ```
 
 DinMeter専用のPlatformIO board定義は未確定です。  
@@ -145,7 +162,7 @@ pio run
 - PlatformIO IDE extensionが有効か
 - `platform = espressif32` が取得できているか
 - `m5stack-stamps3` boardが解決できているか
-- `M5DinMeter / M5Unified / M5GFX` ライブラリが取得できているか
+- `M5DinMeter / M5Unified / M5GFX / CytronMotorDriver` ライブラリが取得できているか
 
 ---
 
@@ -198,7 +215,20 @@ DinMeter画面に次の情報を表示します。
 ロータリエンコーダを回すと、`Target` が `-100` から `100` の範囲で変化します。
 
 `Target` が `0` の状態でボタンを長押しすると、画面上の状態が `Armed` へ変わります。  
-現段階では、`Armed` になっても実モータ出力は行いません。
+既定設定では、`Armed` になっても実モータ出力は行いません。
+
+---
+
+## 現在のモータドライバwrapper
+
+現時点では、Cytron公式 `CytronMotorDriver` ライブラリをproject wrapper経由で扱います。UIから複数profileを選択する機能は未実装です。
+
+| Wrapper | 対象 | Cytron mode | 現状 |
+|---|---|---|---|
+| `CytronMd20aDriver` | MD20A | `PWM_DIR` | mainから接続済み。既定はlog-only |
+| `CytronMakerDriveDriver` | MAKER-DRIVE | `PWM_PWM` | wrapper追加済み。現行UIからは未選択 |
+
+MAKER-DRIVEは初学者向け・乾電池駆動向けの小型DCモータ用として扱います。2.5〜9.5 V、1 A連続を超える用途には使わないでください。2ch modeの構造はありますが、操作UIと実機検証は未実装です。
 
 ---
 
@@ -209,43 +239,48 @@ DinMeter画面に次の情報を表示します。
 ```text
 .
 ├── README.md
+├── AGENTS.md
+├── CLAUDE.md
+├── GEMINI.md
 ├── platformio.ini
 ├── src/
-│   └── main.cpp
+│   ├── main.cpp
+│   └── drivers/
+│       ├── CytronMd20aDriver.cpp
+│       └── CytronMakerDriveDriver.cpp
 ├── include/
-│   └── AppState.h
+│   ├── AppState.h
+│   ├── DriverStatus.h
+│   ├── MotorDriver.h
+│   ├── config/
+│   │   ├── FeatureFlags.h
+│   │   └── PinConfig.h
+│   └── drivers/
+│       ├── CytronMd20aDriver.h
+│       └── CytronMakerDriveDriver.h
 ├── docs/
-│   ├── bringup_log.md
-│   ├── fallback_arduino_cli.md
-│   ├── safety_state_machine.md
-│   └── hardware/
-│       └── README.md
+│   ├── architecture/
+│   │   ├── driver_interface.md
+│   │   ├── io_profile_matrix.md
+│   │   └── safety_state_machine.md
+│   ├── canon/
+│   ├── hardware/
+│   │   ├── M5DinMeter/
+│   │   ├── M5StampS3/
+│   │   ├── MD20A/
+│   │   ├── MAKER_DRIVE/
+│   │   ├── M3508_C620/
+│   │   ├── DDT-M0602C234/
+│   │   ├── RobStride_EDULITE_05/
+│   │   └── TMOTOR_AIR_40A/
+│   ├── manuals/
+│   ├── operations/
+│   ├── software/
+│   │   └── CytronMotorDriver/
+│   ├── standards/
+│   └── templates/
+├── agent-skills/
 └── .vscode/
-    └── extensions.json
-```
-
-今後、AIコーディングエージェント向けに次の構成へ拡張します。
-
-```text
-AGENTS.md
-CLAUDE.md
-GEMINI.md
-
-docs/
-  canon/
-  standards/
-  architecture/
-  hardware/
-  manuals/
-  templates/
-  operations/
-
-agent-skills/
-  firmware-bringup/
-  motor-driver-profile/
-  hardware-spec-author/
-  user-manual-writer/
-  safety-reviewer/
 ```
 
 ---
@@ -275,15 +310,14 @@ agent-skills/
 
 優先順は次の通りです。
 
-1. AI向けMDファイル群の整備
-2. ハードウェア仕様 `docs/hardware/*/spec.md` の追加
-3. Safety State Machineの整理
-4. Driver Interface設計
-5. MD20Aの出力スタブ
+1. 実機なしでの安全状態とlog-only動作確認
+2. MD20A / MAKER-DRIVEのロジックアナライザ確認
+3. `ENABLE_REAL_MOTOR_OUTPUT=1` での停止値確認
+4. 低電圧・電流制限付きの初回実出力試験
+5. モータプロファイル選択UIの設計
 6. C620 CAN受信・送信スタブ
 7. EDULITE 05 CAN Private protocolスタブ
 8. DDT RS485スタブ
-9. ユーザー向け取扱説明書の作成
 
 ---
 

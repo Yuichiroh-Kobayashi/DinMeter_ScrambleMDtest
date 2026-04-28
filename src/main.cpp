@@ -5,27 +5,31 @@
  * 安全仕様:
  * - 電源投入時は必ず Disabled。
  * - target = 0 の時のみ長押しで Armed 可能。
- * - 今回は実際のモータ出力（CAN/RS485/PWM）は行わない。
+ * - MD20Aの実出力はENABLE_REAL_MOTOR_OUTPUTが1のときだけ有効。
  */
 
 #include "AppState.h"
+#include "config/PinConfig.h"
+#include "drivers/CytronMd20aDriver.h"
 #include <M5DinMeter.h>
 
 // 状態管理
 SystemState currentState = SystemState::Disabled;
-int32_t targetValue = 0;
-const int32_t TARGET_MIN = -100;
-const int32_t TARGET_MAX = 100;
+int32_t targetPercent = 0;
+const int32_t TARGET_PERCENT_MIN = -100;
+const int32_t TARGET_PERCENT_MAX = 100;
+CytronMd20aDriver md20aDriver(PinConfig::kMd20aPwmPin,
+                              PinConfig::kMd20aDirPin);
 
 // 前回の値を保持（表示更新用）
 SystemState lastState = SystemState::Fault; // 初期表示を強制するため
-int32_t lastTarget = -999;
+int32_t lastTargetPercent = -999;
 
 /**
  * @brief 画面表示の更新
  */
 void updateDisplay() {
-  if (currentState == lastState && targetValue == lastTarget)
+  if (currentState == lastState && targetPercent == lastTargetPercent)
     return;
 
   DinMeter.Display.startWrite();
@@ -58,12 +62,12 @@ void updateDisplay() {
   DinMeter.Display.setCursor(10, 90);
   DinMeter.Display.setTextSize(3);
   DinMeter.Display.setTextColor(CYAN, BLACK);
-  DinMeter.Display.printf("Target: %4d", targetValue);
+  DinMeter.Display.printf("Target: %4d", targetPercent);
 
   DinMeter.Display.endWrite();
 
   lastState = currentState;
-  lastTarget = targetValue;
+  lastTargetPercent = targetPercent;
 }
 
 void setup() {
@@ -81,6 +85,7 @@ void setup() {
   Serial.println("--- DinMeter Motor Console Start ---");
   Serial.println("Board: M5Stack DinMeter v1.1 (Stamp-S3)");
   Serial.println("Status: Power Hold (GPIO46) set to HIGH");
+  md20aDriver.begin();
 
   // 4. 画面初期設定
   DinMeter.Display.setRotation(1);
@@ -95,25 +100,32 @@ void loop() {
   // エンコーダ操作: target値の増減
   int32_t diff = DinMeter.Encoder.readAndReset();
   if (diff != 0) {
-    targetValue += (diff);
-    if (targetValue < TARGET_MIN)
-      targetValue = TARGET_MIN;
-    if (targetValue > TARGET_MAX)
-      targetValue = TARGET_MAX;
-    Serial.printf("Target updated: %d\n", targetValue);
+    targetPercent += (diff);
+    if (targetPercent < TARGET_PERCENT_MIN)
+      targetPercent = TARGET_PERCENT_MIN;
+    if (targetPercent > TARGET_PERCENT_MAX)
+      targetPercent = TARGET_PERCENT_MAX;
+    md20aDriver.setTargetPercent(static_cast<int>(targetPercent));
+    Serial.printf("Target updated: %d\n", targetPercent);
   }
 
   // ボタン操作: 長押しで状態遷移
   if (DinMeter.BtnA.wasHold()) {
     if (currentState == SystemState::Disabled) {
-      if (targetValue == 0) {
-        currentState = SystemState::Armed;
-        Serial.println("State Changed: ARMED");
+      if (targetPercent == 0) {
+        if (md20aDriver.arm()) {
+          currentState = SystemState::Armed;
+          Serial.println("State Changed: ARMED");
+        } else {
+          currentState = SystemState::Fault;
+          Serial.println("State Changed: FAULT (MD20A arm failed)");
+        }
       } else {
         Serial.println("Safety: Cannot Arm unless target is 0");
       }
     } else if (currentState == SystemState::Armed) {
       currentState = SystemState::Disabled;
+      md20aDriver.disarm();
       Serial.println("State Changed: DISABLED");
     }
   }
@@ -121,8 +133,14 @@ void loop() {
   // 短押しでDisabledに戻る（非常停止的な扱い）
   if (DinMeter.BtnA.wasClicked() && currentState == SystemState::Armed) {
     currentState = SystemState::Disabled;
+    md20aDriver.disarm();
     Serial.println("State Changed: DISABLED (by click)");
   }
+
+  if (currentState == SystemState::Disabled || currentState == SystemState::Fault) {
+    md20aDriver.disarm();
+  }
+  md20aDriver.update();
 
   // 画面更新
   updateDisplay();

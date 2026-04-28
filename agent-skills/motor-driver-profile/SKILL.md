@@ -14,6 +14,34 @@ description: Use when adding or modifying a motor driver profile such as MD20A, 
 - `docs/architecture/driver_interface.md`
 - relevant `docs/hardware/*/spec.md`
 
+## Official library rule
+
+Before implementing a motor driver manually, check whether an official library exists.
+
+If an official manufacturer library exists:
+
+1. Add or update `docs/software/<library>/spec.md`.
+2. Use the official library through a project wrapper class.
+3. Do not call the library directly from UI or safety state code.
+4. Preserve the project safety rules:
+   - no output in constructor
+   - no output in `begin()`
+   - no direct output in `setTargetPercent()`
+   - output only in `update()` while Armed
+   - zero output in Disabled / Fault
+5. If the official library is not compatible with ESP32-S3, record the issue and fall back to a custom implementation only after review.
+
+## Pin assignment rule
+
+Before choosing GPIO pins, read:
+
+- `docs/architecture/io_profile_matrix.md`
+- relevant `docs/hardware/*/spec.md`
+
+If a pin is marked `Provisional` or `Verified`, implement it as a named constant.  
+If a pin is only `Candidate`, do not enable it as the default output pin unless the user explicitly requests it.  
+If a pin is `Reserved`, do not use it.
+
 ## Procedure
 
 1. Identify the target device and profile name.

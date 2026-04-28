@@ -4,7 +4,7 @@
 
 ## 位置づけ
 
-- DinMeter v1.1 は、Stamp-S3Aを内蔵したDIN規格風の小型表示・操作デバイス。
+- DinMeter v1.1 は、Stamp-S3Aを内蔵した小型表示・操作デバイスである。
 - このプロジェクトでは、簡易モータコントローラのHMIとして使用する。
 - 最初のbring-upでは、画面表示、ロータリエンコーダ入力、長押しArmed、Serialログのみ確認する。
 - CAN/RS485/PWM出力は別段階で実装する。
@@ -60,16 +60,22 @@
 | PORT.A | GND | 5V | G13 | G15 |
 | PORT.B | GND | 5V | G2 | G1 |
 
-## このプロジェクトでのピン候補
+## Project I/O Assignment Policy
+
+詳細な割当判断は `docs/architecture/io_profile_matrix.md` を正とする。
 
 | 用途 | 推奨候補 | 備考 |
 |---|---|---|
-| CAN TX | PORT.A G13 | 外付けCAN transceiver必須 |
-| CAN RX | PORT.A G15 | 外付けCAN transceiver必須 |
-| RS485 TX/RX | PORT.B G2/G1 | 半二重制御ピンが必要なら追加検討 |
-| PWM/DIR | PORT.A/Bの空きGPIO | 実装時にプロファイルごとに固定 |
+| CAN_TX | PORT.A G13 | 外付けCAN transceiver必須 |
+| CAN_RX | PORT.A G15 | 外付けCAN transceiver必須 |
+| RS485_TX/RX | PORT.B G2/G1 | 半二重制御ピンが必要なら追加検討 |
+| MD20A_PWM | PORT.B G2 | CytronMotorDriver経由。実機での出力波形確認は未検証 |
+| MD20A_DIR | PORT.B G1 | CytronMotorDriver経由。実機での方向確認は未検証 |
 
-## 安全仕様
+- 実出力は `ENABLE_REAL_MOTOR_OUTPUT=0` の間は無効。
+- 実出力前にロジックアナライザまたはオシロスコープで確認する。
+
+## Safety
 
 - 電源投入直後は `Disabled`。
 - 起動時 `target = 0`。
@@ -77,7 +83,7 @@
 - bring-up段階では実出力なし。
 - `Disabled` ではCAN/RS485/PWM/DIRを送信しない、または安全値固定。
 
-## Codex向け実装メモ
+## 実装メモ
 
 - DinMeter固有処理は `board/DinMeterBoard.*` に集約する。
 - UIは `ui/ScreenView.*` と `ui/EncoderInput.*` に分ける。

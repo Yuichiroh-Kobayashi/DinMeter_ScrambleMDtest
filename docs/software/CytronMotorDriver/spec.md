@@ -77,12 +77,15 @@ motor2.setSpeed(0);
 
 ## Safety rules
 
-- constructorで実モータ出力を出さない。
-- `begin()` で意図しない回転を発生させない。
-- `setTargetPercent()` は値の保存だけにする。
-- `update()` の `Armed` 状態でのみ `setSpeed()` を呼ぶ。
+- `CytronMD`のconstructorはハードウェア副作用(pinMode設定や初期出力)を持つため、直接インスタンス化する際は注意する。
+- UIやSafetyStateMachineから `CytronMD` を直接呼ばない。
+- wrapperの `begin()` では意図しない回転を発生させず、停止値を明示する安全初期化(例: `setSpeed(0)`)だけを許可する。
+- `setTargetPercent()` は値の保存のみ行う。直接ハードウェアに書き込まない。
+- `update()` の `Armed` 状態でのみ実質的な `setSpeed()` を呼んでよい。
 - `Disabled` / `Fault` では `setSpeed(0)` 相当へ落とす。
 - 既定では `ENABLE_REAL_MOTOR_OUTPUT=0` とし、物理出力を行わない。
+- `ENABLE_REAL_MOTOR_OUTPUT=1` は通常ビルドでは使わず、bring-up専用ビルドとして扱う。
+- 実出力(real output)を有効にしたビルドでは、安全ログへの記入を必須とする。
 
 ## ESP32-S3 notes
 

@@ -60,10 +60,17 @@ void CytronMakerDriveDriver::disarm() {
   if (status_ != DriverStatus::Fault) {
     status_ = DriverStatus::Disabled;
   }
+  // Fault時でも安全のため停止出力を試みる。
+  // ただしFaultの原因(status_)はここでは解除せず、明示的な復帰処理を待つ。
   applyZeroOutput();
 }
 
 void CytronMakerDriveDriver::setTargetPercent(int targetPercent) {
+  if (status_ == DriverStatus::Fault) {
+    motor1TargetPercent_ = 0;
+    motor2TargetPercent_ = 0;
+    return;
+  }
   const int safeTargetPercent = clampTargetPercent(targetPercent);
   motor1TargetPercent_ = safeTargetPercent;
   if (!dualMotorMode_) {
@@ -73,6 +80,11 @@ void CytronMakerDriveDriver::setTargetPercent(int targetPercent) {
 
 void CytronMakerDriveDriver::setDualTargetPercent(int motor1TargetPercent,
                                                   int motor2TargetPercent) {
+  if (status_ == DriverStatus::Fault) {
+    motor1TargetPercent_ = 0;
+    motor2TargetPercent_ = 0;
+    return;
+  }
   motor1TargetPercent_ = clampTargetPercent(motor1TargetPercent);
   motor2TargetPercent_ = clampTargetPercent(motor2TargetPercent);
 }
@@ -133,6 +145,8 @@ void CytronMakerDriveDriver::writeSpeedOutput(int motor1SpeedCommand,
   if (!speedCommandIsValid(motor1SpeedCommand) ||
       !speedCommandIsValid(motor2SpeedCommand)) {
     status_ = DriverStatus::Fault;
+    motor1TargetPercent_ = 0; // Fault時はターゲットを即座にリセットする
+    motor2TargetPercent_ = 0;
     applyZeroOutput();
     Serial.println("MAKER-DRIVE Fault: speed command is out of range.");
     return;
@@ -144,6 +158,12 @@ void CytronMakerDriveDriver::writeSpeedOutput(int motor1SpeedCommand,
   } else if (motor2_ != nullptr) {
     motor2_->setSpeed(0);
   }
+
+  // TODO: 安全設計 (VAMeter-Edu由来)
+  // 急激な方向反転(正転<->逆転)による過電流を防ぐため、
+  // 直前の出力符号と現在の出力符号が異なる場合は、
+  // 一度 setSpeed(0) を出力し、数msのdelayまたは次周期まで待つ処理を検討する。
+  // 現在は即時切り替わるため、負荷の大きいモータでは電源リセットを誘発する恐れがある。
 #else
   (void)motor1SpeedCommand;
   (void)motor2SpeedCommand;

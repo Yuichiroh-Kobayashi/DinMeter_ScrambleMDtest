@@ -21,14 +21,14 @@ Before implementing a motor driver manually, check whether an official library e
 If an official manufacturer library exists:
 
 1. Add or update `docs/software/<library>/spec.md`.
-2. Use the official library through a project wrapper class.
+2. **Mandatory Wrapper**: You must use the official library through a project wrapper class. Do not use it directly.
 3. Do not call the library directly from UI or safety state code.
-4. Preserve the project safety rules:
-   - no output in constructor
-   - no output in `begin()`
-   - no direct output in `setTargetPercent()`
-   - output only in `update()` while Armed
-   - zero output in Disabled / Fault
+4. Preserve the project safety rules (Responsibility Separation):
+   - **constructor**: Hardware side-effects (e.g., pinMode) are prohibited or must be carefully managed. No output.
+   - **`begin()`**: No output, except for safe initialization (e.g., explicit stop values).
+   - **`setTargetPercent()`**: Only saves the value. No direct hardware writes.
+   - **`update()`**: Only place where real output commands (e.g., `setSpeed()`) are called, and only while Armed.
+   - **Disabled / Fault**: Must force zero output or safe stop.
 5. If the official library is not compatible with ESP32-S3, record the issue and fall back to a custom implementation only after review.
 
 ## Pin assignment rule

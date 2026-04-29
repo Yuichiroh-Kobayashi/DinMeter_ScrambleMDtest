@@ -45,6 +45,19 @@
 
 実際のForward/Backward方向はモータ配線に依存する。
 
+## Initial PWM safety policy
+
+初期bring-upにおける安全設計として、出力パターンを以下に制限する。
+
+- **Disabled / Fault / target=0**: Low / Low (Brake) とする。
+- **target > 0**: PWM / Low とする。
+- **target < 0**: Low / PWM とする。
+
+初期bring-upでは、予期せぬ挙動を防ぐため、以下の状態は使用しない。
+- High / High (Coast)
+- PWM / High
+- High / PWM
+
 ## Library policy
 
 MAKER-DRIVE は、Cytron公式 `CytronMotorDriver` ライブラリの `PWM_PWM` 方式で制御する。
@@ -85,9 +98,9 @@ public:
 
 ## Initial implementation scope
 
-### Option A: single motor mode
+### Option A: single motor mode (Default)
 
-- M1A/M1Bのみ使用。
+- M1A/M1Bのみ使用。既定の動作モードとする。
 - `targetPercent` 1つで1個のDCモータを制御。
 - 初回Bring-upに向く。
 - `CytronMakerDriveDriver` の初期実装対象。
@@ -96,7 +109,7 @@ public:
 
 - M1A/M1B, M2A/M2Bを使用。
 - 左右同一速度、または簡易差動制御に対応。
-- UI設計が必要なため、初期実装では後回しでもよい。
+- UI未実装、別レビューが必要、実機未検証のため、初期実装では使用しない。
 - `CytronMakerDriveDriver` に構造はあるが、UIから使う機能は未実装。
 
 ## Implementation status

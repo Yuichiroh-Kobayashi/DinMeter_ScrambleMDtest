@@ -19,10 +19,14 @@ description: Use when reviewing changes that affect motor output, state transiti
 1. Identify whether the change can affect physical output.
 2. Confirm startup is `Disabled`.
 3. Confirm `Disabled` and `Fault` force zero output or no command.
-4. Confirm `Armed` entry requires long press and target == 0.
-5. Confirm `begin()` and constructors emit no physical output.
-6. Confirm documentation updates are included for user-visible changes.
-7. If any safety rule is violated, request changes.
+4. Confirm `Fault` state does not hold a non-zero target.
+5. Confirm `Armed` entry requires long press and target == 0.
+6. Confirm `begin()` and constructors emit no physical output.
+7. If `ENABLE_REAL_MOTOR_OUTPUT=1` is being proposed:
+   - Check for the presence of `docs/operations/motor_output_verification_log.md`.
+   - Confirm that at least the `No-motor Waveform` and `No-load Motor` verifications are logged and passed.
+8. Confirm documentation updates are included for user-visible changes.
+9. If any safety rule is violated, request changes.
 
 ## Output
 

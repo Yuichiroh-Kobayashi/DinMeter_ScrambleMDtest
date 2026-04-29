@@ -53,10 +53,16 @@ void CytronMd20aDriver::disarm() {
   if (status_ != DriverStatus::Fault) {
     status_ = DriverStatus::Disabled;
   }
+  // Fault時でも安全のため停止出力を試みる。
+  // ただしFaultの原因(status_)はここでは解除せず、明示的な復帰処理を待つ。
   applyZeroOutput();
 }
 
 void CytronMd20aDriver::setTargetPercent(int targetPercent) {
+  if (status_ == DriverStatus::Fault) {
+    targetPercent_ = 0;
+    return;
+  }
   targetPercent_ = clampTargetPercent(targetPercent);
 }
 
@@ -105,11 +111,17 @@ void CytronMd20aDriver::writeSpeedOutput(int speedCommand) {
 #if ENABLE_REAL_MOTOR_OUTPUT
   if (speedCommand < kCytronSpeedMin || speedCommand > kCytronSpeedMax) {
     status_ = DriverStatus::Fault;
+    targetPercent_ = 0; // Fault時はターゲットを即座にリセットする
     applyZeroOutput();
     Serial.println("MD20A Fault: speed command is out of range.");
     return;
   }
 
+  // TODO: 安全設計 (VAMeter-Edu由来)
+  // 急激な方向反転(正転<->逆転)による過電流を防ぐため、
+  // 直前の出力符号と現在の出力符号が異なる場合は、
+  // 一度 setSpeed(0) を出力し、数msのdelayまたは次周期まで待つ処理を検討する。
+  // 現在は即時切り替わるため、負荷の大きいモータでは電源リセットを誘発する恐れがある。
   motor()->setSpeed(speedCommand);
 #else
   (void)speedCommand;

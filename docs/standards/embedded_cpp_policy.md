@@ -81,6 +81,10 @@ AIエージェントは、`docs/architecture/io_profile_matrix.md` で `Provisio
 - constructor は物理出力を出してはならない。
 - 実モータ出力は Armed 状態の明示的な `update()` 内だけで行う。
 - `Disabled` と `Fault` では、出力はゼロ、停止パルス、未接続、またはHigh-Z相当にする。
+- **Fault発生時は、ドライバ内部の `target` (targetPercent等) を即座に `0` へ戻さなければならない。**
+- **Fault状態において、外部から非ゼロの `target` を設定しようとする試みは無視するか、`0` に固定しなければならない。**
+- **Faultの理由(ステータス)は、明示的なDisarmやReset操作が行われるまで保持し続けなければならない。**
+- ただし、安全確保のための `applyZeroOutput` (停止指令の再送) は `Fault` 中であっても許可される。
 - C620など閉ループ制御対象では、`Disabled` 中に速度0制御を回して制動電流を出してはならない。
 
 ## GPIO / Bus Policy
@@ -137,15 +141,16 @@ wrapper classは、次を保証する。
 
 ## Safe output initialization
 
-`ENABLE_REAL_MOTOR_OUTPUT=1` のとき、`begin()` は停止値を明示するための安全初期化を行ってよい。
+モータ制御における初期化(`begin()`)は、出力状態を安全な停止状態へ遷移・明示させることだけを目的としなければならない。
+`ENABLE_REAL_MOTOR_OUTPUT=1` のとき、`begin()` は停止値を明示するための安全初期化を行ってよい。許可されるのは**停止値のみ**である。
 
-許可される例:
-- PWM=0
-- DIRは既定方向
+許可される例 (停止値の明示):
+- PWM = 0
+- DIR = 既定方向
 - `setSpeed(0)`
-- ESC停止パルス
+- ESC停止パルス (例: 1500us / 1000us)
 
-禁止:
-- 非ゼロ速度指令
-- target値に基づく出力
-- Armed前の回転を起こす出力
+絶対禁止:
+- 非ゼロ速度指令による初期化
+- target値に基づく出力 (targetの反映は必ずArmed後の `update()` で行う)
+- Armed前の回転・駆動を起こす出力

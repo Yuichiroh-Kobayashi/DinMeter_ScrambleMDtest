@@ -5,21 +5,41 @@
  * 安全仕様:
  * - 電源投入時は必ず Disabled。
  * - target = 0 の時のみ長押しで Armed 可能。
- * - MD20Aの実出力はENABLE_REAL_MOTOR_OUTPUTが1のときだけ有効。
+ * - MD20AやMAKER-DRIVEの実出力はENABLE_REAL_MOTOR_OUTPUTが1のときだけ有効。
  */
 
 #include "AppState.h"
+#include "config/FeatureFlags.h"
 #include "config/PinConfig.h"
+#include "drivers/CytronMakerDriveDriver.h"
 #include "drivers/CytronMd20aDriver.h"
 #include <M5DinMeter.h>
+
+enum class MotorProfile {
+  MD20A,
+  MAKER_DRIVE_SINGLE
+};
+
+#if DEFAULT_MOTOR_PROFILE_MAKER_DRIVE
+constexpr MotorProfile kDefaultMotorProfile = MotorProfile::MAKER_DRIVE_SINGLE;
+#else
+constexpr MotorProfile kDefaultMotorProfile = MotorProfile::MD20A;
+#endif
 
 // 状態管理
 SystemState currentState = SystemState::Disabled;
 int32_t targetPercent = 0;
 const int32_t TARGET_PERCENT_MIN = -100;
 const int32_t TARGET_PERCENT_MAX = 100;
+
+MotorDriver* activeDriver = nullptr;
 CytronMd20aDriver md20aDriver(PinConfig::kMd20aPwmPin,
                               PinConfig::kMd20aDirPin);
+CytronMakerDriveDriver makerDriveDriver(PinConfig::kMakerDriveM1aPin,
+                                        PinConfig::kMakerDriveM1bPin,
+                                        PinConfig::kMakerDriveM2aPin,
+                                        PinConfig::kMakerDriveM2bPin,
+                                        false); // false = single motor mode
 
 // 前回の値を保持（表示更新用）
 SystemState lastState = SystemState::Fault; // 初期表示を強制するため
@@ -85,7 +105,20 @@ void setup() {
   Serial.println("--- DinMeter Motor Console Start ---");
   Serial.println("Board: M5Stack DinMeter v1.1 (Stamp-S3)");
   Serial.println("Status: Power Hold (GPIO46) set to HIGH");
-  md20aDriver.begin();
+
+  if (kDefaultMotorProfile == MotorProfile::MAKER_DRIVE_SINGLE) {
+    activeDriver = &makerDriveDriver;
+    Serial.println("Selected Profile: MAKER_DRIVE_SINGLE");
+  } else {
+    activeDriver = &md20aDriver;
+    Serial.println("Selected Profile: MD20A");
+  }
+
+  if (!activeDriver->begin()) {
+    currentState = SystemState::Fault;
+    targetPercent = 0;
+    Serial.println("State Changed: FAULT (driver begin failed)");
+  }
 
   // 4. 画面初期設定
   DinMeter.Display.setRotation(1);
@@ -100,32 +133,39 @@ void loop() {
   // エンコーダ操作: target値の増減
   int32_t diff = DinMeter.Encoder.readAndReset();
   if (diff != 0) {
-    targetPercent += (diff);
-    if (targetPercent < TARGET_PERCENT_MIN)
-      targetPercent = TARGET_PERCENT_MIN;
-    if (targetPercent > TARGET_PERCENT_MAX)
-      targetPercent = TARGET_PERCENT_MAX;
-    md20aDriver.setTargetPercent(static_cast<int>(targetPercent));
-    Serial.printf("Target updated: %d\n", targetPercent);
+    if (currentState == SystemState::Fault) {
+      targetPercent = 0;
+      activeDriver->setTargetPercent(0);
+      Serial.println("Safety: Target change ignored while Fault.");
+    } else {
+      targetPercent += (diff);
+      if (targetPercent < TARGET_PERCENT_MIN)
+        targetPercent = TARGET_PERCENT_MIN;
+      if (targetPercent > TARGET_PERCENT_MAX)
+        targetPercent = TARGET_PERCENT_MAX;
+      activeDriver->setTargetPercent(static_cast<int>(targetPercent));
+      Serial.printf("Target updated: %d\n", targetPercent);
+    }
   }
 
   // ボタン操作: 長押しで状態遷移
   if (DinMeter.BtnA.wasHold()) {
     if (currentState == SystemState::Disabled) {
       if (targetPercent == 0) {
-        if (md20aDriver.arm()) {
+        if (activeDriver->arm()) {
           currentState = SystemState::Armed;
           Serial.println("State Changed: ARMED");
         } else {
           currentState = SystemState::Fault;
-          Serial.println("State Changed: FAULT (MD20A arm failed)");
+          targetPercent = 0;
+          Serial.println("State Changed: FAULT (driver arm failed)");
         }
       } else {
         Serial.println("Safety: Cannot Arm unless target is 0");
       }
     } else if (currentState == SystemState::Armed) {
       currentState = SystemState::Disabled;
-      md20aDriver.disarm();
+      activeDriver->disarm();
       Serial.println("State Changed: DISABLED");
     }
   }
@@ -133,14 +173,14 @@ void loop() {
   // 短押しでDisabledに戻る（非常停止的な扱い）
   if (DinMeter.BtnA.wasClicked() && currentState == SystemState::Armed) {
     currentState = SystemState::Disabled;
-    md20aDriver.disarm();
+    activeDriver->disarm();
     Serial.println("State Changed: DISABLED (by click)");
   }
 
   if (currentState == SystemState::Disabled || currentState == SystemState::Fault) {
-    md20aDriver.disarm();
+    activeDriver->disarm();
   }
-  md20aDriver.update();
+  activeDriver->update();
 
   // 画面更新
   updateDisplay();

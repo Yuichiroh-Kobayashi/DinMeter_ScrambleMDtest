@@ -66,7 +66,7 @@ MD20Aは検証中です。既定状態では実モータ出力は有効ではあ
 
 ## 6. MAKER-DRIVE PWM_PWMプロファイル
 
-MAKER-DRIVEは検証中です。現時点ではwrapper実装のみで、画面からプロファイル選択して使うUIは未実装です。
+MAKER-DRIVEは検証中です。現時点では `DEFAULT_MOTOR_PROFILE_MAKER_DRIVE 1` をコンパイル時に指定することで、Single motor modeのlog-only確認が行えます。画面からプロファイル選択して使うUIは未実装です。DinMeter上での実運転は未実施であり、VAMeter-Eduでの試験結果をDinMeter上の確認済み結果として扱わないでください。
 
 | 項目 | 内容 |
 |---|---|
@@ -97,7 +97,7 @@ Fault時は出力しません。原因が不明な場合は、実機接続試験
 
 | 表示またはログ | 意味 | 対処 |
 |---|---|---|
-| `MD20A arm failed` | MD20AドライバをArmedにできない | target、GPIO設定、feature flagを確認します |
+| `driver arm failed` | ドライバをArmedにできない | target、GPIO設定、feature flagを確認します |
 | `GPIO is 未検証 or invalid` | 実出力有効時にGPIOが未設定 | 回路図と実機でGPIOを確認します |
 
 ## 9. 未実装または未検証

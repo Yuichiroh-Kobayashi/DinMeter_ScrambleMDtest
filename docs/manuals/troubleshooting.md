@@ -14,9 +14,9 @@ Target hardware: M5Stack DinMeter v1.1
 1. 画面で、Targetが `0` であることを確認します。
 2. Stateが `Fault` ではないことを確認します。
 3. ロータリエンコーダのボタンを長押ししていることを確認します。
-4. Serialログに `MD20A Safety` または `MD20A arm failed` が出ていないか確認します。
+4. Serialログに `Safety` または `driver arm failed` が出ていないか確認します。
 
-## 3. `MD20A arm failed` が出る
+## 3. `driver arm failed` が出る
 
 1. Targetが `0` であることを確認します。
 2. `ENABLE_REAL_MOTOR_OUTPUT` の値を確認します。
@@ -51,7 +51,8 @@ Target hardware: M5Stack DinMeter v1.1
 既定状態ではMAKER-DRIVEの実出力は無効です。
 
 1. `ENABLE_REAL_MOTOR_OUTPUT=0` の場合、モータが回らない動作が正常です。
-2. 現時点ではMAKER-DRIVEを画面から選択するUIは未実装です。
-3. Single motor modeではM1A/M1Bのみを確認します。
-4. 2ch modeは構造のみで、UIから使う機能は未実装です。
-5. 実出力試験を行う場合は、`docs/operations/maker_drive_initial_test_log.md` に従ってください。
+2. `DEFAULT_MOTOR_PROFILE_MAKER_DRIVE` が `1` に設定されているか確認します。
+3. 現時点ではMAKER-DRIVEを画面から選択するUIは未実装です。
+4. Single motor modeではM1A/M1Bのみを確認します。
+5. 2ch modeは構造のみで、UIから使う機能は未実装です。
+6. 実出力試験へ進む際は、別紙のNo-motor Waveform・実機検証ログが必要です。

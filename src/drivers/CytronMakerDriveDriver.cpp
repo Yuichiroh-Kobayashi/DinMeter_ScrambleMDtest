@@ -220,10 +220,14 @@ void CytronMakerDriveDriver::logOutputPreviewIfChanged(
   const int motor2SpeedCommand =
       mapTargetPercentToSpeedCommand(motor2TargetPercent);
 
-  Serial.printf("MAKER-DRIVE Cytron preview: status=%d mode=%s m1Target=%d m1Speed=%d m2Target=%d m2Speed=%d output=%s\n",
-                static_cast<int>(driverStatus),
-                dualMotorMode_ ? "dual" : "single", motor1TargetPercent,
-                motor1SpeedCommand, motor2TargetPercent, motor2SpeedCommand,
+  const char* stateStr = "Unknown";
+  if (driverStatus == DriverStatus::Disabled) stateStr = "Disabled";
+  else if (driverStatus == DriverStatus::Armed) stateStr = "Armed";
+  else if (driverStatus == DriverStatus::Fault) stateStr = "Fault";
+
+  Serial.printf("MAKER-DRIVE preview: profile=MAKER_DRIVE_%s state=%s target=%d speedCommand=%d output=%s\n",
+                dualMotorMode_ ? "DUAL" : "SINGLE", stateStr, motor1TargetPercent,
+                motor1SpeedCommand,
 #if ENABLE_REAL_MOTOR_OUTPUT
                 "real"
 #else

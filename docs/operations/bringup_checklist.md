@@ -57,6 +57,7 @@ CAN / RS485 / PWMスタブを追加した場合:
 - [ ] 実モータ・ドライバを接続していない。
 - [ ] 物理出力関数が呼ばれない状態でビルド確認した。
 - [ ] ダミー/ログ出力だけで動作確認した。
+  - MAKER-DRIVEの場合: USB接続のみで起動し、Serialログで `MAKER-DRIVE preview: profile=MAKER_DRIVE_SINGLE state=Armed target=... output=log-only` が出力されることを確認した。
 - [ ] `Disabled` で出力がゼロまたは未送信であることを確認した。
 - [ ] `Fault` で出力がゼロまたは未送信であることを確認した。
 

@@ -4,26 +4,30 @@
 
 ## Verification Gates
 
-### Gate A: No-motor Waveform Verification (モータ未接続・波形確認)
-**目的**: モータを接続せず、ドライバの出力波形(PWM/DIR等)が想定通りかオシロスコープ等で確認する。
-**重要**: この段階では、ドライバの出力端子に**モータを絶対に接続しない**こと。
+### Gate A: No-motor Signal Verification (制御信号確認)
+
+**目的**: モータを接続せず、DinMeter GPIOからモータドライバ入力端子へ送る制御信号(PWM/DIR、MAKER-DRIVEならM1A/M1B等)が想定通りかオシロスコープ等で確認する。
+**重要**: この段階では、ドライバの出力端子に**モータを絶対に接続しない**こと。また、ドライバのモータ出力端子側を測定するのではなく、DinMeterからドライバへの入力信号を確認すること。
 
 - **Date**: YYYY-MM-DD
 - **Target Device**: (e.g., MAKER-DRIVE)
+- **Note**: VAMeter-Eduでの試験結果をDinMeter上の結果として流用しないこと。必ずDinMeter実機で制御信号の波形確認から行う。
 - **Checklist**:
-  - [ ] `Disabled` 時に出力信号が完全にLow(または停止値)である。
-  - [ ] `Armed` かつ `target=0` で出力が停止値である。
-  - [ ] `Armed` で `target>0` / `target<0` のときに、正しいピンから適切なPWM波形が出ている。
-  - [ ] 電圧・周波数がドライバの仕様に適合している。
+  - [ ] `Disabled` 時に制御信号が完全にLow(または停止値)である。
+  - [ ] `Armed` かつ `target=0` で制御信号が停止値である。
+  - [ ] `Armed` で `target>0` / `target<0` のときに、正しいピンから適切なPWM波形（制御信号）が出ている。
+  - [ ] 電圧・周波数がドライバのロジック入力仕様に適合している。
 - **Result/Notes**: (結果や気付きを記述)
 
 ---
 
 ### Gate B: Real Output Verification (実モータ接続確認)
+
 **目的**: 実際にモータを接続し、動作を確認する。
-**前提条件**: **Gate A (No-motor Waveform Verification) がパスしていること。**
+**前提条件**: **Gate A (No-motor Signal Verification / 制御信号確認) がパスしていること。**
 
 #### 2. No-load Motor Verification (無負荷モータ確認)
+
 - **Date**: YYYY-MM-DD
 - **Checklist**:
   - [ ] 起動時(Power-on)にモータが回らないこと。
@@ -33,6 +37,7 @@
 - **Result/Notes**: (結果や気付きを記述)
 
 #### 3. Loaded Motor Verification (負荷付き確認)
+
 - **Date**: YYYY-MM-DD
 - **Checklist**:
   - [ ] 負荷をかけた状態で、ドライバの定格電流(Continuous current)を超えないこと。

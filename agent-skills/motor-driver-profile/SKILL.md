@@ -58,3 +58,16 @@ If a pin is `Reserved`, do not use it.
 - Do not guess protocol values.
 - Do not enable motor output without explicit test plan.
 - Do not mix real output implementation with unrelated UI cleanup.
+
+## VAMeter-Edu Motor Observe handoff
+
+Before designing DD motor constant-force control, read:
+
+- `docs/references/vameter_edu_motor_observe_handoff.md`
+
+This handoff defines:
+
+- why VAMeter-Edu + MAKER-DRIVE + gearmotor is withdrawn from the main constant-force device path
+- why PWM value and driver input current must not be treated as force or torque
+- which safety, CSV, transfer, and Go/NoGO design assets must be reused
+- why RobStride EDULITE 05 and DDT-M0602C234 are the next main candidates

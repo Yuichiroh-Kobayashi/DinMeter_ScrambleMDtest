@@ -6,9 +6,11 @@
 ## Position
 
 - MAKER-DRIVE は、初学者向けの2ch H-Bridge DCモータドライバ。
-- 乾電池で動く小型DCモータ教材向けに扱う。
-- MD20Aより低電圧・低電流で、初回の教育用デモや安全なBring-upに向く。
+- MD20Aより低電圧・低電流で扱えるため、DCモータの初期bring-upや教材デモの検討に向く。
+- **教育用可変型定力装置の本線候補ではない。**
 - このプロジェクトでは `CytronMotorDriver` ライブラリの `PWM_PWM` 方式で扱う。
+- VAMeter-Edu Motor Observeで確認した通り、**PWM値やdriver input currentを力・トルクとみなしてはいけない。**
+- **DinMeter_ScrambleMDtestでは、MAKER-DRIVEの実運転試験はまだ実施していない。** VAMeter-Edu上のMAKER-DRIVE試験結果を、DinMeter上の実機確認済み結果として扱わないこと。
 
 ## Main specifications
 

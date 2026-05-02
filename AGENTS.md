@@ -61,3 +61,16 @@ This handoff defines:
 - why PWM value and driver input current must not be treated as force or torque
 - which safety, CSV, transfer, and Go/NoGO design assets must be reused
 - why RobStride EDULITE 05 and DDT-M0602C234 are the next main candidates
+
+For DD motor bring-up and development, you **must also read and follow**:
+
+- `docs/architecture/dd_motor_constant_force_handoff.md`
+- `docs/architecture/dd_motor_csv_logging_plan.md`
+- `docs/operations/dd_motor_low_torque_bringup_plan.md`
+- `docs/operations/dd_motor_safety_test_log.md`
+- Relevant candidate motor spec under `docs/hardware/`
+
+> [!IMPORTANT]
+> - DD motor work **must not rely only on** `docs/architecture/motor_output_backend_design.md`.
+> - `motor_output_backend_design.md` is specifically for GPIO/PWM motor-driver backends.
+> - DD motor work must follow the DD-specific bring-up and safety documents listed above.

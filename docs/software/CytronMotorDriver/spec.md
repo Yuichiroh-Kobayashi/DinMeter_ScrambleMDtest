@@ -95,8 +95,10 @@ motor2.setSpeed(0);
 - `CytronMD` のconstructorは `pinMode()` と `digitalWrite(LOW)` を行う。`ENABLE_REAL_MOTOR_OUTPUT=0` の既定状態ではconstructorも呼ばない。
 - `ENABLE_REAL_MOTOR_OUTPUT=1` のときは、project wrapperの `begin()` で `CytronMD` を生成し、停止値 `setSpeed(0)` だけを明示する。
 
-## Unverified
+## Unverified & Disclaimers
 
-- ESP32-S3 + M5DinMeter + CytronMotorDriver library の実機動作。
-- MD20Aでの最適PWM周波数。
-- MAKER-DRIVEでの3.3V信号認識。データシート上はHigh 1.7〜6Vなので成立見込みだが実機確認する。
+- **DinMeter_ScrambleMDtest上での MAKER-DRIVE 実運転は未実施である。**
+- VAMeter-Edu Motor ObserveでのMAKER-DRIVE試験結果を、DinMeter上の実機確認済み結果として扱わないこと。
+- ESP32-S3 + M5DinMeter + CytronMotorDriver library の実機動作は未検証。
+- MD20Aでの最適PWM周波数は未検証。
+- MAKER-DRIVEでの3.3V信号認識について、データシート上はHigh 1.7〜6Vなので成立見込みだが、実機確認するまで未検証として扱うこと。

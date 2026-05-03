@@ -95,10 +95,12 @@ motor2.setSpeed(0);
 - `CytronMD` のconstructorは `pinMode()` と `digitalWrite(LOW)` を行う。`ENABLE_REAL_MOTOR_OUTPUT=0` の既定状態ではconstructorも呼ばない。
 - `ENABLE_REAL_MOTOR_OUTPUT=1` のときは、project wrapperの `begin()` で `CytronMD` を生成し、停止値 `setSpeed(0)` だけを明示する。
 
-## Unverified & Disclaimers
+## ESP32-S3 implementation note
 
-- **DinMeter_ScrambleMDtest上での MAKER-DRIVE 実運転は未実施である。**
-- VAMeter-Edu Motor ObserveでのMAKER-DRIVE試験結果を、DinMeter上の実機確認済み結果として扱わないこと。
-- ESP32-S3 + M5DinMeter + CytronMotorDriver library の実機動作は未検証。
-- MD20Aでの最適PWM周波数は未検証。
-- MAKER-DRIVEでの3.3V信号認識について、データシート上はHigh 1.7〜6Vなので成立見込みだが、実機確認するまで未検証として扱うこと。
+DinMeter_ScrambleMDtest の ESP32-S3 環境では、CytronMotorDriver ライブラリ経由のPWM出力で波形が出ない問題を確認した。
+
+そのため、ESP32-S3向け実装では、project wrapper class の内部で CytronMotorDriver と同等の `PWM_DIR` / `PWM_PWM` 信号を、ESP32 LEDC API により直接出力する。
+
+これは、CytronMotorDriverをアプリ層から直接呼ばないという方針を維持したうえでの、ESP32-S3向け互換性回避策である。
+
+注意: この回避策は現在のPlatformIO/Arduino-ESP32 2.x系で確認したもの。Arduino-ESP32 3.x系では `ledcSetup` / `ledcAttachPin` が削除されているため、移行時には `ledcAttach` / `ledcAttachChannel` 系APIへの見直しが必要。

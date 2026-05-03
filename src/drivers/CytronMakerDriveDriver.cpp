@@ -30,10 +30,29 @@ bool CytronMakerDriveDriver::begin() {
   }
 
 #if ENABLE_REAL_MOTOR_OUTPUT
+#if defined(ARDUINO_ARCH_ESP32)
+  // ESP32のLEDCを手動でセットアップする (analogWriteの問題を完全に回避)
+  ledcSetup(0, 5000, 8); // Channel 0, 5kHz, 8-bit
+  ledcAttachPin(m1aPin_, 0);
+  ledcSetup(1, 5000, 8); // Channel 1, 5kHz, 8-bit
+  ledcAttachPin(m1bPin_, 1);
+  ledcWrite(0, 0);
+  ledcWrite(1, 0);
+
+  if (dualMotorMode_) {
+    ledcSetup(2, 5000, 8); // Channel 2, 5kHz, 8-bit
+    ledcAttachPin(m2aPin_, 2);
+    ledcSetup(3, 5000, 8); // Channel 3, 5kHz, 8-bit
+    ledcAttachPin(m2bPin_, 3);
+    ledcWrite(2, 0);
+    ledcWrite(3, 0);
+  }
+#else
   motor1()->setSpeed(0);
   if (dualMotorMode_) {
     motor2()->setSpeed(0);
   }
+#endif
 #else
   Serial.println("MAKER-DRIVE: CytronMotorDriver output disabled by ENABLE_REAL_MOTOR_OUTPUT=0.");
 #endif
@@ -130,12 +149,21 @@ int CytronMakerDriveDriver::mapTargetPercentToSpeedCommand(
 
 void CytronMakerDriveDriver::applyZeroOutput() {
 #if ENABLE_REAL_MOTOR_OUTPUT
+#if defined(ARDUINO_ARCH_ESP32)
+  ledcWrite(0, 0);
+  ledcWrite(1, 0);
+  if (dualMotorMode_) {
+    ledcWrite(2, 0);
+    ledcWrite(3, 0);
+  }
+#else
   if (motor1_ != nullptr) {
     motor1_->setSpeed(0);
   }
   if (motor2_ != nullptr) {
     motor2_->setSpeed(0);
   }
+#endif
 #endif
 }
 
@@ -152,12 +180,35 @@ void CytronMakerDriveDriver::writeSpeedOutput(int motor1SpeedCommand,
     return;
   }
 
+#if defined(ARDUINO_ARCH_ESP32)
+  // ESP32-S3において、CytronMotorDriverライブラリのledcWrite実装が
+  // ピン番号をチャンネル番号として扱ってしまう不具合、および
+  // analogWriteの挙動不安定を回避するため、ledcWriteを直接使用する。
+  if (motor1SpeedCommand >= 0) {
+    ledcWrite(0, motor1SpeedCommand); // Channel 0 (m1aPin)
+    ledcWrite(1, 0);                  // Channel 1 (m1bPin)
+  } else {
+    ledcWrite(0, 0);                  // Channel 0 (m1aPin)
+    ledcWrite(1, -motor1SpeedCommand);// Channel 1 (m1bPin)
+  }
+
+  if (dualMotorMode_) {
+    if (motor2SpeedCommand >= 0) {
+      ledcWrite(2, motor2SpeedCommand); // Channel 2 (m2aPin)
+      ledcWrite(3, 0);                  // Channel 3 (m2bPin)
+    } else {
+      ledcWrite(2, 0);                  // Channel 2 (m2aPin)
+      ledcWrite(3, -motor2SpeedCommand);// Channel 3 (m2bPin)
+    }
+  }
+#else
   motor1()->setSpeed(motor1SpeedCommand);
   if (dualMotorMode_) {
     motor2()->setSpeed(motor2SpeedCommand);
   } else if (motor2_ != nullptr) {
     motor2_->setSpeed(0);
   }
+#endif
 
   // TODO: 安全設計 (VAMeter-Edu由来)
   // 急激な方向反転(正転<->逆転)による過電流を防ぐため、

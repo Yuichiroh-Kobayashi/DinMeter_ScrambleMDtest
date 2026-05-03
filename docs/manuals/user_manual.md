@@ -66,7 +66,7 @@ MD20Aは検証中です。既定状態では実モータ出力は有効ではあ
 
 ## 6. MAKER-DRIVE PWM_PWMプロファイル
 
-MAKER-DRIVEは検証中です。現時点では `DEFAULT_MOTOR_PROFILE_MAKER_DRIVE 1` をコンパイル時に指定することで、Single motor modeのlog-only確認が行えます。画面からプロファイル選択して使うUIは未実装です。DinMeter上での実運転は未実施であり、VAMeter-Eduでの試験結果をDinMeter上の確認済み結果として扱わないでください。
+MAKER-DRIVEは検証済みです。`DEFAULT_MOTOR_PROFILE_MAKER_DRIVE 1` をコンパイル時に指定することで、Port B（G2/G1）を用いた実機制御が可能です。2026-05-03の試験にて、ESP32-S3 Core 2.0.x 環境での双方向PWM出力および小型DCモータ（FA-130相当）の双方向回転が確認されました。
 
 | 項目 | 内容 |
 |---|---|
@@ -79,7 +79,7 @@ MAKER-DRIVEは検証中です。現時点では `DEFAULT_MOTOR_PROFILE_MAKER_DRI
 | 2ch対応 | 構造のみ。UI未実装、実機未検証 |
 | 既定動作 | Serial previewのみ。物理出力なし |
 | 実出力有効化 | `ENABLE_REAL_MOTOR_OUTPUT=1` が必要 |
-| GPIO | M1A: G2、M1B: G1、M2A: G13、M2B: G15。実機波形と方向は未検証 |
+| GPIO | M1A: G2 (Yellow), M1B: G1 (White)。実機での双方向出力および回転を確認済み |
 
 MAKER-DRIVEを高電流用途に使わないでください。1A連続を超えるモータは接続しないでください。
 
@@ -104,6 +104,6 @@ Fault時は出力しません。原因が不明な場合は、実機接続試験
 
 - MD20Aの実機回転試験は未検証です。
 - MD20AのPWM=GPIO2、DIR=GPIO1は仮割当です。実機波形と方向は未検証です。
-- MAKER-DRIVEの実機回転試験は未検証です。
 - MAKER-DRIVEの2ch UI操作は未実装です。
 - C620とDDT-M0602C234は、このPhase 1では実装していません。
+- ESP32-S3 Core 2.0.x において、CytronMotorDriverライブラリの `ledcWrite` 実装が動作しない不具合を、ドライバ内部の `ledcSetup` / `ledcAttachPin` 明示的呼び出しにより回避しています。

@@ -56,3 +56,14 @@ Target hardware: M5Stack DinMeter v1.1
 4. Single motor modeではM1A/M1Bのみを確認します。
 5. 2ch modeは構造のみで、UIから使う機能は未実装です。
 6. 実出力試験へ進む際は、別紙のNo-motor Waveform・実機検証ログが必要です。
+
+## 8. Armed かつ Target 非ゼロなのにPWM波形が出ない
+
+1. **Armed状態の確認**: 画面のStateが赤色の `ARMED` になっているか確認します。`Disabled` 状態では安全のためPWMは出力されません。
+2. **ESP32固有の不具合**: `CytronMotorDriver` ライブラリは内部で `ledcWrite` を使用していますが、ESP32-S3等の一部の環境では初期化不足やチャンネル指定の誤りにより波形が出ないことがあります。
+   - 対策として、プロジェクトのドライバ実装（`CytronMakerDriveDriver.cpp` 等）では、ESP32環境下で `ledcSetup` および `ledcAttachPin` を明示的に呼び出してチャンネルを割り当てる回避策を導入しています。
+3. **ピン番号の確認**: `include/config/PinConfig.h` で指定したGPIOが、実際にオシロスコープ等で測定しているポートのピンと一致しているか確認してください。
+   - Port B G2: GPIO 2
+   - Port B G1: GPIO 1
+   - Port A G13: GPIO 13
+   - Port A G15: GPIO 15

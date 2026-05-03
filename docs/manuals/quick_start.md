@@ -40,8 +40,7 @@ Target hardware: M5Stack DinMeter v1.1
 1. コンパイル時に `include/config/FeatureFlags.h` で `DEFAULT_MOTOR_PROFILE_MAKER_DRIVE 1` を設定し、プロファイルを切り替えます。
 2. `docs/operations/bringup_checklist.md` を確認します。
 3. まずは外部電源やモータを接続せず、USB接続のみでのLog-only確認を行います。
-4. `docs/operations/maker_drive_initial_test_log.md` を記入します（存在しない場合は作成）。
-5. 実出力を有効化する場合、M1AがGPIO2、M1BがGPIO1に接続されていることを確認します。
-6. DinMeter上での実運転は未実施です。VAMeter-Eduでの結果を流用せず、必ず波形確認から実施してください。
-7. 小型DCモータのみを接続します。1A連続を超えるモータを接続しないでください。
-8. 実出力を有効化する場合だけ、`ENABLE_REAL_MOTOR_OUTPUT=1` にします。
+4. `docs/operations/maker_drive_initial_test_log.md` またはそれに準ずるログを確認します。2026-05-03に実機での双方向回転が確認済みです。
+5. 実出力を有効化する場合、M1AがGPIO2 (Yellow)、M1BがGPIO1 (White) に接続されていることを確認します。
+6. 小型DCモータ（1A連続以下）のみを接続します。
+7. 実出力を有効化する場合だけ、`ENABLE_REAL_MOTOR_OUTPUT=1` にします。

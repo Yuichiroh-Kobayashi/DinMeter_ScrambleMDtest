@@ -26,7 +26,16 @@ bool CytronMd20aDriver::begin() {
   }
 
 #if ENABLE_REAL_MOTOR_OUTPUT
+#if defined(ARDUINO_ARCH_ESP32)
+  // ESP32のLEDCを手動でセットアップする (analogWriteの問題を完全に回避)
+  ledcSetup(4, 5000, 8); // Channel 4, 5kHz, 8-bit
+  ledcAttachPin(pwmPin_, 4);
+  ledcWrite(4, 0);
+  pinMode(dirPin_, OUTPUT);
+  digitalWrite(dirPin_, LOW);
+#else
   motor()->setSpeed(0);
+#endif
 #else
   Serial.println("MD20A: CytronMotorDriver output disabled by ENABLE_REAL_MOTOR_OUTPUT=0.");
 #endif
@@ -101,9 +110,14 @@ int CytronMd20aDriver::mapTargetPercentToSpeedCommand(int targetPercent) const {
 
 void CytronMd20aDriver::applyZeroOutput() {
 #if ENABLE_REAL_MOTOR_OUTPUT
+#if defined(ARDUINO_ARCH_ESP32)
+  ledcWrite(4, 0);
+  digitalWrite(dirPin_, LOW);
+#else
   if (motor_ != nullptr) {
     motor_->setSpeed(0);
   }
+#endif
 #endif
 }
 
@@ -122,7 +136,20 @@ void CytronMd20aDriver::writeSpeedOutput(int speedCommand) {
   // 直前の出力符号と現在の出力符号が異なる場合は、
   // 一度 setSpeed(0) を出力し、数msのdelayまたは次周期まで待つ処理を検討する。
   // 現在は即時切り替わるため、負荷の大きいモータでは電源リセットを誘発する恐れがある。
+#if defined(ARDUINO_ARCH_ESP32)
+  // ESP32-S3において、CytronMotorDriverライブラリのledcWrite実装が
+  // ピン番号をチャンネル番号として扱ってしまう不具合、および
+  // analogWriteの挙動不安定を回避するため、ledcWriteを直接使用する。
+  if (speedCommand >= 0) {
+    ledcWrite(4, speedCommand);
+    digitalWrite(dirPin_, LOW);
+  } else {
+    ledcWrite(4, -speedCommand);
+    digitalWrite(dirPin_, HIGH);
+  }
+#else
   motor()->setSpeed(speedCommand);
+#endif
 #else
   (void)speedCommand;
 #endif
